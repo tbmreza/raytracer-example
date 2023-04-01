@@ -1,50 +1,91 @@
 #lang racket
 
-; (define WIDTH 256)
-; (define HEIGHT 256)
-;
-; (define (denormalize n)
-; 	(exact-floor (* 255.999 n)))
-;
-; (define image
-;   (lambda ()
-;     (displayln "P3")
-;     (printf "~a ~a\n" WIDTH HEIGHT)
-; 		(displayln "255")
-;
-; 		(for ([j (in-range HEIGHT 0 -1)])
-; 			; std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
-; 			(for ([i WIDTH])
-; 				(define r (/ i (- WIDTH 1.0)))
-; 				(define g (/ j (- HEIGHT 1.0)))
-; 				(define b 0.85)
-;
-; 				(printf "~a ~a ~a\n" (denormalize r)(denormalize g)(denormalize b))))))
-;
+(define WIDTH 256)
+(define HEIGHT 256)
+
+(define (denormalize n)
+	(exact-floor (* 255.999 n)))
+
+(define image
+  (lambda ()
+    (displayln "P3")
+    (printf "~a ~a\n" WIDTH HEIGHT)
+		(displayln "255")
+
+		(for ([j (in-range HEIGHT 0 -1)])
+			; std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+			(for ([i WIDTH])
+				(define r (/ i (- WIDTH 1.0)))
+				(define g (/ j (- HEIGHT 1.0)))
+				(define b 0.85)
+
+				(printf "~a ~a ~a\n" (denormalize r)(denormalize g)(denormalize b))))))
+
 ; (image)
 
-; vec3 struct of 3 fields
-; methods (maybe operator overloading later):
-; - [x] equal?
-; - [ ] add -> vec3::new(u.e[0] + v.e[0], u.e[1] + v.e[1], u.e[2] + v.e[2])
-; - [ ] ...
-; - [ ] unit_vector -> v / v.length()
+(require racket/generic)
+
+(define-generics Trio
+    [add Trio t]
+    [subtract Trio t]
+    [mult Trio t]
+    [multc Trio C]
+    [divc Trio C]
+    [unit-vector Trio])
 
 (struct trio (e1 e2 e3)
-  #:methods
-	; impl equal?
-  gen:equal+hash
-  [(define (equal-proc a b equal?-recur)
-     (and (equal?-recur (trio-e1 a) (trio-e1 b))
-          (equal?-recur (trio-e2 a) (trio-e2 b))
-          (equal?-recur (trio-e3 a) (trio-e3 b))))
-   (define (hash-proc a hash-recur)
-     (+ (* 10000 (hash-recur (trio-e1 a)))
-        (* 100 (hash-recur (trio-e2 a)))
-        (* 1 (hash-recur (trio-e3 a)))))
-   (define (hash2-proc a hash2-recur)
-     (+ (hash2-recur (trio-e1 a))
-        (hash2-recur (trio-e2 a))
-        (hash2-recur (trio-e3 a))))])
+  #:methods gen:Trio [
+    (define (add a b)
+      (trio (+ (trio-e1 a)
+               (trio-e1 b))
+            (+ (trio-e2 a)
+               (trio-e2 b))
+            (+ (trio-e3 a)
+               (trio-e3 b))))
+    (define (subtract a b)
+      (trio (- (trio-e1 a)
+               (trio-e1 b))
+            (- (trio-e2 a)
+               (trio-e2 b))
+            (- (trio-e3 a)
+               (trio-e3 b))))
+    (define (mult a b)
+      (trio (* (trio-e1 a)
+               (trio-e1 b))
+            (* (trio-e2 a)
+               (trio-e2 b))
+            (* (trio-e3 a)
+               (trio-e3 b))))
+    (define (multc t C)
+      (trio (* (trio-e1 t) C)
+            (* (trio-e2 t) C)
+            (* (trio-e3 t) C)))
+    (define (divc t C)
+      (trio (* (trio-e1 t) (/ 1 C))
+            (* (trio-e1 t) (/ 1 C))
+            (* (trio-e1 t) (/ 1 C))))
+    (define (unit-vector t) (divc t 1))]
 
+  #:methods gen:equal+hash [
+    (define (equal-proc a b equal?-recur)
+      (and (equal?-recur (trio-e1 a) (trio-e1 b))
+      (equal?-recur (trio-e2 a) (trio-e2 b))
+      (equal?-recur (trio-e3 a) (trio-e3 b))))
+    (define (hash-proc a hash-recur)
+      (+ (* 10000 (hash-recur (trio-e1 a)))
+         (* 100 (hash-recur (trio-e2 a)))
+         (* 1 (hash-recur (trio-e3 a)))))
+    (define (hash2-proc a hash2-recur)
+      (+ (hash2-recur (trio-e1 a))
+         (hash2-recur (trio-e2 a))
+         (hash2-recur (trio-e3 a))))])
+
+; tests
 (equal? (trio 12 11 14)(trio 12 14 11))
+(unit-vector (trio 12 11 14))
+(trio-e1 (add (trio 12 11 14)(trio 12 14 11)))
+(trio-e1 (subtract (trio 10 10 10)(trio 2 4 1)))
+(trio-e1 (mult (trio 10 10 10)(trio 2 4 1)))
+(trio-e1 (multc (trio 2 4 1) 100))
+(trio-e1 (divc (trio 2 4 1) 2))
+(unit-vector (trio 2 4 1))
