@@ -4,7 +4,7 @@
 (require racket/generic)
 
 (define (denor n)
-	(exact-floor (* 255.999 n)))
+  (exact-floor (* 255.999 n)))
 
 (define-generics Trio
     [write-color Trio]
@@ -69,16 +69,19 @@
 
 (define color trio)
 
-; tests
-; (equal? (trio 12 11 14)(trio 12 14 11))
-; (unit-vector (trio 12 11 14))
+(module+ test
+  (require rackunit)
+  (check-equal? (trio 12 14 11) (trio 12 14 11))
+  (check-not-equal? (trio 2 14 11) (trio 12 14 11)))
+
+(unit-vector (trio 12 11 14))
 ; (trio-e1 (add (trio 12 11 14)(trio 12 14 11)))
 ; (trio-e1 (subtract (trio 10 10 10)(trio 2 4 1)))
 ; (trio-e1 (mult (trio 10 10 10)(trio 2 4 1)))
 ; (trio-e1 (multc (trio 2 4 1) 100))
 ; (trio-e1 (divc (trio 2 4 1) 2))
 ; (unit-vector (trio 2 4 1))
-; (write-color (trio 2 4 1))
+(write-color (trio 2 4 1))
 ; end module
 
 (define WIDTH 256)
@@ -88,15 +91,15 @@
   (lambda ()
     (displayln "P3")
     (printf "~a ~a\n" WIDTH HEIGHT)
-		(displayln "255")
+    (displayln "255")
 
-		(for ([j (in-range HEIGHT 0 -1)])
-			; std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
-			(for ([i WIDTH])
-				(define r (/ i (- WIDTH 1.0)))
-				(define g (/ j (- HEIGHT 1.0)))
-				(define b 0.25)
+    (for ([j (in-range HEIGHT 0 -1)])
+      ; std::cerr << "\rScanlines remaining: " << j << ' ' << std::flush;
+      (for ([i WIDTH])
+        (define r (/ i (- WIDTH 1.0)))
+        (define g (/ j (- HEIGHT 1.0)))
+        (define b 0.25)
 
-				(write-color (color r g b))))))
+        (write-color (color r g b))))))
 
-(image)
+; (image)
